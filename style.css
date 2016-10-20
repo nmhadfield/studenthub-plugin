@@ -1,3 +1,11 @@
 textarea {
 	width: 90%;
 }
+
+div#ui-datepicker-div {
+    background-color: #FFFFFF;
+}
+
+div.updated {
+	display: none;
+}

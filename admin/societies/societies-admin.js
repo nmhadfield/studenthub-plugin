@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
 });
 
 function findUserByEmail() {
-	var ajax = jQuery.get(ajaxurl, {action: 'studenthub_find_user', sh_email: jQuery('#sh-email').val()});
+	var ajax = jQuery.get(ajaxurl, {action: 'studenthub_find_user', sh_first_name: jQuery('#sh-first-name').val(), sh_last_name: jQuery('#sh-last-name').val()});
 	ajax.done(function(html) {
 		jQuery('#sh-found-user').empty();
 		jQuery('#sh-found-user').append(html);

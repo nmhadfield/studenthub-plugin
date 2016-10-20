@@ -18,8 +18,14 @@ function sh_societies_committee_metabox() {
 	include('societies-committee.php');
 }
 
-function sh_find_user_by_email() {
-	$user = get_user_by('email', $_GET['sh_email']);
+function sh_societies_add_committee_member() {
+	$login = $_GET['sh_login'];
+	
+	//$user = get_user_by('login', $_GET['sh_login']);
+	
+	if ($user != null) {
+		
+	}
 
 	echo('<input type="hidden" id="sh-userid" value="'.$user->ID.'"></input>');
 	echo('<label>'.$user-> display_name.'</label>');

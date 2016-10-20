@@ -1,5 +1,5 @@
 function studenthubAdminParseElectives() {
-	jQuery("#output>tbody").remove();
+	jQuery("#output").val("<entries>");
 	var input = jQuery.parseHTML(jQuery("#input").val());
 	
 	jQuery(input).find("li").each(function() {
@@ -26,6 +26,8 @@ function studenthubAdminParseElectives() {
 		posterName = posterName.replace("respiratory-medicine", "respiratory medicine");
 		posterName = posterName.replace("accident-and-emergency", "emergency medicine");
 		posterName = posterName.replace("a-and-e", "emergency medicine");
+		posterName = posterName.replace("the-bahamas", "the bahamas");
+		posterName = posterName.replace("plastic-surgery", "plastic surgery");
 		posterName = posterName.replace("emergency-medicine", "emergency medicine");
 		posterName = posterName.replace("internal-medicine", "internal medicine");
 		posterName = posterName.replace("primary-health-care", "primary care");
@@ -62,18 +64,21 @@ function studenthubAdminParseElectives() {
 			posterName = posterName.substring(0, posterName.length - 1);
 		}
 		parts = posterName.split("-");
-		var result = "<tr>";
-		result += "<td>" + student + "</td>";
-		result += "<td><ul>";
+		
+		
+		var result = "<entry>";
+		result += "<title>" + jQuery(jQuery(this).find("a")[0]).text().replace('&', '&amp;') + "</title>";
+		result += "<student>" + student + "</student>";
+		result += "<keywords>";
 		for (var i = 0; i<parts.length;i++) {
 			if (parts[i].trim().length != 0 && parts[i] != "and") {
-				result += "<li>" + parts[i] + "</li>";
+				result += "<keyword>" + parts[i] + "</keyword>";
 			}
 		}
-		result += "</ul></td>";
-		result += "<td>" + poster + "</td>";
+		result += "</keywords>";
+		result += "<poster>" + poster + "</poster>";
 		
-		result += "<td>";
+		result += "<summary>";
 		var summary = jQuery(this).find("a")[1];
 		if (summary === undefined) {
 			
@@ -82,12 +87,12 @@ function studenthubAdminParseElectives() {
 			summary = jQuery(summary).attr("href"); 
 			result += summary;
 		}
-		result += "</td>";
+		result += "</summary>";
 		
-		result += "</tr>";
-		jQuery("#output").append(result);
-		jQuery("#input").remove();
+		result += "</entry>";
+		jQuery("#output").val(jQuery("#output").val() + result);
 	});
+	jQuery("#output").val(jQuery("#output").val() + "</entries>");
 }
 
 function studenthub_electives_remove(event) {
@@ -95,14 +100,5 @@ function studenthub_electives_remove(event) {
 }
 
 function studentHubAdminUpload() {
-	jQuery("tbody>tr").each(function() {
-		var student = jQuery(this.childNodes[0]).text();
-		var keywords = [];
-		jQuery(this.childNodes[1]).find("li").each(function() {
-			keywords.push(jQuery(this).text());
-		});
-		var poster = jQuery(this.childNodes[2]).text();
-		var summary = jQuery(this.childNodes[3]).text();
-		jQuery.post(ajaxurl, {action: 'studenthub_admin_import_elective', student: student, keywords: keywords, poster: poster, summary: summary});
-	});
+	jQuery.post(ajaxurl, {action: 'studenthub_admin_import_elective', xml: jQuery("#output").val()});
 }
