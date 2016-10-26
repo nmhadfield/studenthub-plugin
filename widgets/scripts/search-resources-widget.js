@@ -36,7 +36,8 @@ function sh_filterResources(event, category) {
 	
 	feed.done(function (html) {
 		var parent = jQuery("#topic-loop").parent();
-    	jQuery("#topic-loop").remove();
+    	jQuery(".topic-loop").remove();
+    	jQuery("a.feed").remove();
 		parent.append(html);
 	});
 	

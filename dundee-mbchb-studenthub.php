@@ -29,11 +29,12 @@ register_activation_hook ( __FILE__, 'sh_activate' );
 remove_filter ( 'map_meta_cap', '_bp_enforce_bp_moderate_cap_for_admins', 10, 4 );
 
 add_action ( 'init', 'sh_init' );
-add_action ( 'admin_menu', 'studenthub_admin_menu' );
-add_action ( 'admin_enqueue_scripts', 'studenthub_admin_scripts' );
+add_action ( 'admin_init', 'sh_admin_init' );
+add_action ( 'admin_menu', 'sh_admin_menu' );
+add_action ( 'admin_enqueue_scripts', 'sh_admin_scripts' );
 add_action ( 'wp_enqueue_scripts', 'sh_widget_scripts' );
-add_action ( 'wp_ajax_studenthub_admin_import_elective', 'studenthub_admin_import_elective' );
-add_action ( "add_meta_boxes", "studenthub_admin_metaboxes" );
+add_action ( 'wp_ajax_studenthub_admin_import_elective', 'sh_admin_import_elective' );
+add_action ( "add_meta_boxes", "sh_admin_metaboxes" );
 add_action ( "save_post", "sh_admin_page_save", 10, 2 );
 add_action ( "save_post", "sh_admin_deadlines_save", 10, 2 );
 
@@ -61,17 +62,6 @@ add_action ( 'widgets_init', function () {
 	register_widget ( 'link_widget' );
 	register_widget ( 'society_contact_widget' );
 } );
-function sh_activate() {
-	// make sure that StudentHubAdmin can access forums & groups
-	$admin_role = get_role ( "student_hub_admin" );
-	if ($admin_role == null) {
-		$admin_role = add_role ( "student_hub_admin", "Student Hub Admin" );
-	}
-	
-	$admin_role->add_cap ( 'moderate', true );
-	$admin_role->add_cap ( 'bp_moderate', true );
-	$admin_role->add_cap ( 'keep_gate', true );
-}
 function sh_init() {
 	// make sure that all our custom post types are registered
 	if (! post_type_exists ( "societies" )) {
@@ -96,8 +86,64 @@ function sh_init() {
 	}
 	flush_rewrite_rules ( true );
 }
-
-function studenthub_admin_scripts() {
+function sh_admin_init() {
+	// make sure that StudentHubAdmin can access forums & groups
+	$admin_role = get_role ( "student_hub_admin" );
+	if ($admin_role == null) {
+		$admin_role = add_role ( "student_hub_admin", "Student Hub Admin" );
+	}
+	
+	$admin_role->add_cap ( 'moderate', true );
+	$admin_role->add_cap ( 'bp_moderate', true );
+	$admin_role->add_cap ( 'keep_gate', true );
+	$admin_role->add_cap ( 'edit_forums', true );
+	$admin_role->add_cap ( 'edit_topics', true );
+	$admin_role->add_cap ( 'delete_others_topics', true );
+	$admin_role->add_cap ( 'edit_others_forums', true );
+	$admin_role->add_cap ( 'view_trash', true );
+	$admin_role->add_cap ( 'publish_forums', true );
+	$admin_role->add_cap ( 'delete_forums', true );
+	$admin_role->add_cap ( 'delete_topics', true );
+	$admin_role->add_cap ( 'edit_others_topics', true );
+	$admin_role->add_cap ( 'publish_replies', true );
+	$admin_role->add_cap ( 'delete_others_forums', true );
+	$admin_role->add_cap ( 'edit_replies', true );
+	$admin_role->add_cap ( 'publish_topics', true );
+	$admin_role->add_cap ( 'delete_others_pages', true );
+	$admin_role->add_cap ( 'delete_others_posts', true );
+	$admin_role->add_cap ( 'delete_pages', true );
+	$admin_role->add_cap ( 'delete_posts', true );
+	$admin_role->add_cap ( 'delete_private_pages', true );
+	$admin_role->add_cap ( 'delete_private_posts', true );
+	$admin_role->add_cap ( 'delete_published_pages', true );
+	$admin_role->add_cap ( 'delete_published_posts', true );
+	$admin_role->add_cap ( 'edit_others_pages', true );
+	$admin_role->add_cap ( 'edit_others_posts', true );
+	$admin_role->add_cap ( 'edit_pages', true );
+	$admin_role->add_cap ( 'edit_posts', true );
+	$admin_role->add_cap ( 'edit_published_pages', true );
+	$admin_role->add_cap ( 'edit_published_posts', true );
+	$admin_role->add_cap ( 'manage_categories', true );
+	$admin_role->add_cap ( 'publish_pages', true );
+	$admin_role->add_cap ( 'publish_posts', true );
+	$admin_role->add_cap ( 'manage_options', true );
+	$admin_role->add_cap ( 'wpcf_custom_post_type_view', true );
+	$admin_role->add_cap ( 'wpcf_custom_post_type_edit', true );
+	$admin_role->add_cap ( 'wpcf_custom_post_type_edit_others', true );
+	$admin_role->add_cap ( 'wpcf_custom_taxonomy_view', true );
+	$admin_role->add_cap ( 'wpcf_custom_taxonomy_edit', true );
+	$admin_role->add_cap ( 'wpcf_custom_taxonomy_edit_others', true );
+	$admin_role->add_cap ( 'wpcf_custom_field_view', true );
+	$admin_role->add_cap ( 'wpcf_custom_field_edit', true );
+	$admin_role->add_cap ( 'wpcf_custom_field_edit_others', true );
+	$admin_role->add_cap ( 'wpcf_user_meta_field_view', true );
+	$admin_role->add_cap ( 'wpcf_user_meta_field_edit', true );
+	$admin_role->add_cap ( 'wpcf_user_meta_field_edit_others', true );
+	$admin_role->add_cap ( 'wpcf_user_meta_field_view', true );
+	$admin_role->add_cap ( 'wpcf_user_meta_field_edit', true );
+	$admin_role->add_cap ( 'wpcf_user_meta_field_edit_others', true );
+}
+function sh_admin_scripts() {
 	wp_register_style ( 'studenthub_admin_styles', plugins_url ( 'style.css', __FILE__ ) );
 	wp_enqueue_style ( 'studenthub_admin_styles' );
 	
@@ -120,7 +166,7 @@ function sh_widget_scripts() {
 	wp_register_script ( 'sh_widgets', plugins_url ( 'widgets/scripts/widget.js', __FILE__ ) );
 	wp_enqueue_script ( 'sh_widgets' );
 }
-function studenthub_admin_metaboxes() {
+function sh_admin_metaboxes() {
 	add_meta_box ( "sh_admin_topic_links", "Links", "sh_admin_topic_links", "topic", "normal", "high" );
 	add_meta_box ( "sh_admin_page_sidebar", "SideBar", "sh_admin_page_sidebar", "page", "side", "high" );
 	add_meta_box ( "sh_admin_page_forum", "Forum", "sh_admin_page_forum", "page", "normal", "high" );
@@ -136,14 +182,28 @@ function sh_admin_topic_links() {
 	}
 	echo ("</ul>");
 }
-function studenthub_admin_menu() {
-	add_menu_page ( 'StudentHub', 'StudentHub', 'read', 'studenthub-plugin-settings', 'studenthub_settings_page_electives', 'dashicons-admin-generic' );
+function sh_admin_menu() {
+	add_menu_page ( 'StudentHub', 'StudentHub', 'read', 'studenthub-plugin-settings', 'sh_settings_page_electives', 'dashicons-admin-generic' );
 }
-function studenthub_settings_page_electives() {
+function sh_settings_page_electives() {
 	include (plugin_dir_path ( __FILE__ ) . 'admin/electives/import-electives.php');
 }
-function studenthub_admin_import_elective() {
-	$parent = get_page_by_title ( "Electives", OBJECT, 'forum' )->ID;
+function sh_admin_create_forum($forumName, $parent = NULL) {
+	$forum = get_page_by_title ( $forumName, OBJECT, "forum" );
+	if ($forum == null) {
+		$data = array (
+				'post_title' => $forumName 
+		);
+		if ($parent) {
+			$data ['post_parent'] = $parent;
+		}
+		return bbp_insert_forum ( $data );
+	} else {
+		return $forum->ID;
+	}
+}
+function sh_admin_import_elective() {
+	$parent = sh_admin_create_forum ( "Electives" );
 	$entries = new SimpleXMLElement ( $_POST ['xml'] );
 	
 	foreach ( $entries->entry as $entry ) {
