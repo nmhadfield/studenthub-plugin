@@ -22,16 +22,14 @@ class Committee_Widget extends WP_Widget {
 		$results = array();
 		$committee = get_post_meta($args['post-id'], 'sh_committee', false);
 		
-		
 		for ($i = 0; $i < count($committee); $i++) {
-			$email = $committee[$i];
-			$user = get_user_by('email', $email);
-			$role = get_post_meta($args['post-id'], $email, true);
+			$user = get_user_by('id', $committee[$i]['id']);
+			$role = $committee[$i]['role'];
 			
 			array_push($results, array(
 					'role' => $role, 
 					'name' => $user->display_name,
-					'email' => $email));
+					'email' => $user->user_email));
 		}
 
 		

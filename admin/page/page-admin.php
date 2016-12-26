@@ -1,9 +1,9 @@
 <?php
 function sh_admin_page_forum() {
 	$forumId = get_post_meta ( get_the_ID (), 'sh_parent', true );
-	$forum = "";
+	$forum = NULL;
 	if ($forumId != "") {
-		$forum = get_post ( $forumId )->post_title;
+		$forum = get_post ( $forumId );
 	}
 	
 	bbp_dropdown ( array (
@@ -22,7 +22,28 @@ function sh_admin_page_forum() {
 			'disable_categories' => false,
 			'disabled' => '' 
 	) );
+	
+	if ($forum != NULL) {
+		$query = new WP_Query(array('post_parent' => $forumId, 'post_type' => 'forum'));
+		$forums = array();
+		if (!$query -> have_posts()) {
+			array_push($forums, $forum);
+		}
+		else {
+			while ($query -> have_posts()) {
+				$query -> the_post();
+				global $post;
+				array_push($forums, $post);
+			}
+		}
+		foreach ($forums as $aForum) {
+			echo("<input type='checkbox' id='sh_forum_post_'".$aForum->ID." name='sh_forum_post_'".$aForum->ID."'>");
+			echo($aForum->post_title);
+			echo("</input>");
+		}
+	}
 }
+
 function sh_admin_page_sidebar() {
 	echo ("<select id='sh_sidebar' name='sh_sidebar'>");
 	$sidebars = array_keys ( $GLOBALS ['wp_registered_sidebars'] );

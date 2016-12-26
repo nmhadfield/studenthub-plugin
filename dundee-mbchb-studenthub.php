@@ -14,6 +14,7 @@ require_once ("classes/topic-loop.php");
 require_once ("admin/page/page-admin.php");
 require_once ("admin/deadlines/deadlines-admin.php");
 require_once ('admin/societies/societies-admin.php');
+require_once ('admin/forum/forum-admin.php');
 require_once ('admin/topic/topic-admin.php');
 
 require_once ('widgets/search-resources-widget.php');
@@ -34,9 +35,9 @@ add_action ( 'admin_menu', 'sh_admin_menu' );
 add_action ( 'admin_enqueue_scripts', 'sh_admin_scripts' );
 add_action ( 'wp_enqueue_scripts', 'sh_widget_scripts' );
 add_action ( 'wp_ajax_studenthub_admin_import_elective', 'sh_admin_import_elective' );
-add_action ( "add_meta_boxes", "sh_admin_metaboxes" );
-add_action ( "save_post", "sh_admin_page_save", 10, 2 );
-add_action ( "save_post", "sh_admin_deadlines_save", 10, 2 );
+add_action ( 'add_meta_boxes', 'sh_admin_metaboxes' );
+add_action ( 'save_post', 'sh_admin_page_save', 10, 2 );
+add_action ( 'save_post', 'sh_admin_deadlines_save', 10, 2 );
 
 add_action ( 'widgets_init', function () {
 	$sidebars = get_option ( 'sh_sidebars', array () );
@@ -85,6 +86,7 @@ function sh_init() {
 		) );
 	}
 	flush_rewrite_rules ( true );
+	show_admin_bar(true);
 }
 function sh_admin_init() {
 	// make sure that StudentHubAdmin can access forums & groups
@@ -161,17 +163,24 @@ function sh_admin_scripts() {
 	) );
 	
 	wp_enqueue_script ( 'jquery-ui-datepicker' );
+	wp_enqueue_script( 'jquery-form' );
 }
 function sh_widget_scripts() {
-	wp_register_script ( 'sh_widgets', plugins_url ( 'widgets/scripts/widget.js', __FILE__ ) );
-	wp_enqueue_script ( 'sh_widgets' );
+	wp_enqueue_script ( 'sh_widgets', plugins_url ( 'widgets/scripts/widget.js', __FILE__ ) );
+	wp_enqueue_script('sh_societies', plugins_url('admin/societies/societies-admin.js', __FILE__));
 }
 function sh_admin_metaboxes() {
-	add_meta_box ( "sh_admin_topic_links", "Links", "sh_admin_topic_links", "topic", "normal", "high" );
 	add_meta_box ( "sh_admin_page_sidebar", "SideBar", "sh_admin_page_sidebar", "page", "side", "high" );
 	add_meta_box ( "sh_admin_page_forum", "Forum", "sh_admin_page_forum", "page", "normal", "high" );
-	add_meta_box ( "sh_admin_page_forum", "Forum", "sh_admin_page_forum", "societies", "normal", "high" );
 	add_meta_box ( "sh_admin_topic", "Topics", "sh_admin_topic_metabox", "page", "side", "high" );
+	//add_meta_box ( "sh_admin_page_postform", "Post Form", "sh_admin_page_postform", "page", "normal", "high" );
+	
+	add_meta_box ( "sh_admin_page_forum", "Forum", "sh_admin_page_forum", "societies", "normal", "high" );
+	
+	add_meta_box ( "sh_admin_forum_theme", "Theme", "sh_admin_forum_theme", "forum", "side", "high" );
+	add_meta_box ( "sh_admin_forum_post", "Post Form", "sh_admin_forum_post_metaboxes", "forum", "side", "high");
+	add_meta_box ( "sh_admin_topic_links", "Links", "sh_admin_topic_links", "topic", "normal", "high" );
+	
 	add_meta_box ( "sh_admin_deadlines_metaboxes", "Info", "sh_admin_deadlines_metaboxes", "sh_deadline", "side", "high", null );
 }
 function sh_admin_topic_links() {
@@ -185,6 +194,7 @@ function sh_admin_topic_links() {
 function sh_admin_menu() {
 	add_menu_page ( 'StudentHub', 'StudentHub', 'read', 'studenthub-plugin-settings', 'sh_settings_page_electives', 'dashicons-admin-generic' );
 }
+
 function sh_settings_page_electives() {
 	include (plugin_dir_path ( __FILE__ ) . 'admin/electives/import-electives.php');
 }
