@@ -1,5 +1,5 @@
 <?php 
-add_filter( 'manage_edit-sh_deadline_columns', 'sh_admin_deadline_columns' ) ;
+add_filter('manage_edit-sh_deadline_columns', 'sh_admin_deadline_columns' ) ;
 add_action('manage_sh_deadline_posts_custom_column', 'sh_admin_deadline_columns_fill');
 
 function sh_admin_deadline_columns( $columns ) {

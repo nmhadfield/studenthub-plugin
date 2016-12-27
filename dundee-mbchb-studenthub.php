@@ -37,6 +37,7 @@ add_action ( 'wp_enqueue_scripts', 'sh_widget_scripts' );
 add_action ( 'wp_ajax_studenthub_admin_import_elective', 'sh_admin_import_elective' );
 add_action ( 'add_meta_boxes', 'sh_admin_metaboxes' );
 add_action ( 'save_post', 'sh_admin_page_save', 10, 2 );
+add_action ( 'save_post', 'sh_admin_societies_save', 10, 2 );
 add_action ( 'save_post', 'sh_admin_deadlines_save', 10, 2 );
 
 add_action ( 'widgets_init', function () {
@@ -193,11 +194,14 @@ function sh_admin_topic_links() {
 }
 function sh_admin_menu() {
 	add_menu_page ( 'StudentHub', 'StudentHub', 'read', 'studenthub-plugin-settings', 'sh_settings_page_electives', 'dashicons-admin-generic' );
+	add_submenu_page( 'studenthub-plugin-settings', 'Import Electives', 'Import Electives', 'read', 'sh-settings-page-electives', 'sh_settings_page_electives' );
+	add_submenu_page( 'studenthub-plugin-settings', 'Societies', 'Societies', 'read', 'sh-settings-page-societies', 'sh_settings_page_societies' );
 }
 
 function sh_settings_page_electives() {
 	include (plugin_dir_path ( __FILE__ ) . 'admin/electives/import-electives.php');
 }
+
 function sh_admin_create_forum($forumName, $parent = NULL) {
 	$forum = get_page_by_title ( $forumName, OBJECT, "forum" );
 	if ($forum == null) {
