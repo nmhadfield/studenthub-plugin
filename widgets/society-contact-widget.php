@@ -19,10 +19,10 @@ class Society_Contact_Widget extends WP_Widget {
 	 * @param array $instance
 	 */
 	public function widget( $args, $instance ) {
-		$email = get_post_meta($args['post-id'], 'email', true);
-		$fb = get_post_meta($args['post-id'], 'facebook', true);
-		$twitter = get_post_meta($args['post-id'], 'twitter', true);
-		get_post_meta($args['post-id'], 'web', true);
+		$email = get_post_meta(get_the_ID(), 'email', true);
+		$fb = get_post_meta(get_the_ID(), 'facebook', true);
+		$twitter = get_post_meta(get_the_ID(), 'twitter', true);
+		get_post_meta(get_the_ID(), 'web', true);
 		
 		$links = array('facebook' => 'http://www.facebook.com');
 		

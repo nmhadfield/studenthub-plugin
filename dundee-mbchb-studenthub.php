@@ -48,10 +48,18 @@ add_action ( 'widgets_init', function () {
 				'name' => $sidebar 
 		) );
 	}
-	register_sidebar ( array (
+	/*register_sidebar ( array (
 			'id' => 'home-sidebar',
 			'name' => "Home Page" 
 	) );
+	register_sidebar ( array (
+			'id' => 'societies-sidebar',
+			'name' => "Society Sidebar"
+	) );
+	register_sidebar ( array (
+			'id' => 'societies-archive-sidebar',
+			'name' => "Societies Sidebar"
+	) ); */
 	register_widget ( 'search_resources_widget' );
 	register_widget ( 'category_filter_widget' );
 	register_widget ( 'deadlines_widget' );
@@ -64,6 +72,16 @@ add_action ( 'widgets_init', function () {
 	register_widget ( 'link_widget' );
 	register_widget ( 'society_contact_widget' );
 } );
+
+add_filter( 'template_include', 'sh_include_template', 99 );
+
+function sh_include_template( $template ) {
+	$new_template = locate_template( $template );
+	if ( '' != $new_template ) {
+		return $new_template;
+	}
+	return $template;
+}
 function sh_init() {
 	// make sure that all our custom post types are registered
 	if (! post_type_exists ( "societies" )) {
