@@ -6,5 +6,6 @@
 		<?php while ( $query->have_posts() ) : $query->the_post(); ?>
 			<li><a href="<?php echo(the_permalink());?>"><?php echo(the_title()); ?></a></li>
 		<?php endwhile; ?>
+		<?php wp_reset_postdata(); ?>
 	</ul>
 </div>

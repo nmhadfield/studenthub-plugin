@@ -51,15 +51,9 @@ class TopicLoop {
 		}
 		
 		// which forums to include
-		if (array_key_exists('sh_parent', $args) && $args['sh_parent'] != 0) {
-			$parents = studenthub_sh_parent($args['sh_parent']);
-			
-			if (count($parents) > 0) {
-				$query_args['post_parent__in'] = $parents;
-			}
-			else {
-				$query_args['post_parent'] = $args['sh_parent'];
-			}
+		if (array_key_exists('forums', $args)) {
+			$parents = studenthub_sh_parent_explode($args['forums']);
+			$query_args['post_parent__in'] = $parents;
 		}
 		else {
 			// exclude all private forums
@@ -68,6 +62,14 @@ class TopicLoop {
 		
 		include(locate_template('content/topic-loop.php', false ));
 	}
+}
+
+function studenthub_sh_parent_explode($forumMap) {
+	$result = array();
+	foreach ($forumMap as $forumId) {
+		$result = array_merge($result, studenthub_sh_parent($forumId));
+	}
+	return $result;
 }
 
 function studenthub_sh_parent($id) {

@@ -40,6 +40,12 @@ add_action ( 'save_post', 'sh_admin_page_save', 10, 2 );
 add_action ( 'save_post', 'sh_admin_societies_save', 10, 2 );
 add_action ( 'save_post', 'sh_admin_deadlines_save', 10, 2 );
 
+add_filter('query_vars', 'studenthub_add_query_vars_filter');
+function studenthub_add_query_vars_filter($vars) {
+	$vars[] = 'sh_scope';
+	return $vars;
+}
+
 add_action ( 'widgets_init', function () {
 	$sidebars = get_option ( 'sh_sidebars', array () );
 	foreach ( $sidebars as $sidebar ) {
@@ -48,18 +54,6 @@ add_action ( 'widgets_init', function () {
 				'name' => $sidebar 
 		) );
 	}
-	/*register_sidebar ( array (
-			'id' => 'home-sidebar',
-			'name' => "Home Page" 
-	) );
-	register_sidebar ( array (
-			'id' => 'societies-sidebar',
-			'name' => "Society Sidebar"
-	) );
-	register_sidebar ( array (
-			'id' => 'societies-archive-sidebar',
-			'name' => "Societies Sidebar"
-	) ); */
 	register_widget ( 'search_resources_widget' );
 	register_widget ( 'category_filter_widget' );
 	register_widget ( 'deadlines_widget' );
@@ -84,26 +78,22 @@ function sh_include_template( $template ) {
 }
 function sh_init() {
 	// make sure that all our custom post types are registered
-	if (! post_type_exists ( "societies" )) {
-		register_post_type ( 'societies', array (
-				'labels' => array (
-						'name' => __ ( 'Societies' ),
-						'singular_name' => __ ( 'Society' ) 
-				),
-				'public' => true,
-				'has_archive' => true 
-		) );
-	}
-	if (! post_type_exists ( "sh_deadline" )) {
-		register_post_type ( 'sh_deadline', array (
-				'labels' => array (
-						'name' => __ ( 'Deadlines' ),
-						'singular_name' => __ ( 'Deadline' ) 
-				),
-				'public' => true,
-				'has_archive' => true 
-		) );
-	}
+	register_post_type ( 'societies', array (
+			'labels' => array (
+					'name' => __ ( 'Societies' ),
+					'singular_name' => __ ( 'Society' ) 
+			),
+			'public' => true,
+			'has_archive' => false 
+	) );
+	register_post_type ( 'sh_deadline', array (
+			'labels' => array (
+					'name' => __ ( 'Deadlines' ),
+					'singular_name' => __ ( 'Deadline' ) 
+			),
+			'public' => true,
+			'has_archive' => true 
+	) );
 	flush_rewrite_rules ( true );
 	show_admin_bar(true);
 }
@@ -196,8 +186,8 @@ function sh_admin_metaboxes() {
 	
 	add_meta_box ( "sh_admin_page_forum", "Forum", "sh_admin_page_forum", "societies", "normal", "high" );
 	
-	add_meta_box ( "sh_admin_forum_theme", "Theme", "sh_admin_forum_theme", "forum", "side", "high" );
-	add_meta_box ( "sh_admin_forum_post", "Post Form", "sh_admin_forum_post_metaboxes", "forum", "side", "high");
+	//add_meta_box ( "sh_admin_forum_theme", "Theme", "sh_admin_forum_theme", "forum", "side", "high" );
+	add_meta_box ( "sh_admin_forum_post", "New Post Form", "sh_admin_forum_post_metaboxes", "forum", "side", "high");
 	add_meta_box ( "sh_admin_topic_links", "Links", "sh_admin_topic_links", "topic", "normal", "high" );
 	
 	add_meta_box ( "sh_admin_deadlines_metaboxes", "Info", "sh_admin_deadlines_metaboxes", "sh_deadline", "side", "high", null );

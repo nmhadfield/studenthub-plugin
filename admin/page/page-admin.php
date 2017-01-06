@@ -1,11 +1,28 @@
 <?php
 function sh_admin_page_forum() {
-	$forumId = get_post_meta ( get_the_ID (), 'sh_parent', true );
-	$forum = NULL;
-	if ($forumId != "") {
-		$forum = get_post ( $forumId );
+	echo('Show posts from the following forum(s):<br>');
+	// saved as [[forumId, enable_post]]
+	$forumIds = get_post_meta ( get_the_ID (), 'sh_forums', true );
+	
+	echo('<ul id="sh-forum-list">');
+	$index = 0;
+	foreach ($forumIds as $forumInfo) {
+		sh_admin_page_create_forum_entry($forumInfo, $index);
+		$index++;
+	}
+	if ($index == 0) {
+		sh_admin_page_create_forum_entry(null, $index);
 	}
 	
+	echo('</ul>');
+	echo('<p>');
+	echo('<input type="button" id="sh-add-another" value="Add Forum"></input>');
+	echo('</p>');
+}
+
+function sh_admin_page_create_forum_entry($forumInfo, $index) {
+	echo('<li>');
+	$forumId = $forumInfo ? $forumInfo['id'] : '';
 	bbp_dropdown ( array (
 			'post_type' => bbp_get_forum_post_type (),
 			'selected' => $forumId,
@@ -13,35 +30,19 @@ function sh_admin_page_forum() {
 			'orderby' => 'title',
 			'order' => 'ASC',
 			'walker' => '',
-			
+	
 			// Output-related
-			'select_id' => 'sh-parent',
+			'select_id' => 'sh-forums['.$index.'][id]',
 			'tab' => bbp_get_tab_index (),
 			'options_only' => false,
 			'show_none' => __ ( '&mdash; No parent &mdash;', 'bbpress' ),
 			'disable_categories' => false,
-			'disabled' => '' 
+			'disabled' => ''
 	) );
-	
-	if ($forum != NULL) {
-		$query = new WP_Query(array('post_parent' => $forumId, 'post_type' => 'forum'));
-		$forums = array();
-		if (!$query -> have_posts()) {
-			array_push($forums, $forum);
-		}
-		else {
-			while ($query -> have_posts()) {
-				$query -> the_post();
-				global $post;
-				array_push($forums, $post);
-			}
-		}
-		foreach ($forums as $aForum) {
-			echo("<input type='checkbox' id='sh_forum_post_'".$aForum->ID." name='sh_forum_post_'".$aForum->ID."'>");
-			echo($aForum->post_title);
-			echo("</input>");
-		}
-	}
+	echo('<label>Enable posting in forum</label>');
+	$checked = $forumInfo && array_key_exists('can_post', $forumInfo) && $forumInfo['can_post'] ? ' checked' : '';
+	echo('<input type="checkbox" name="sh-forums['.$index.'][can_post]"'.$checked.'></input>');
+	echo('</li>');
 }
 
 function sh_admin_page_sidebar() {
@@ -73,7 +74,7 @@ function sh_admin_page_save($id, $post) {
 	}
 	if (array_key_exists('post_type', $_POST)) {
 		if ($_POST ['post_type'] == 'page' || $_POST ['post_type'] == 'societies') {
-			update_post_meta ( $id, 'sh_parent', $_POST ['sh-parent'] );
+			update_post_meta ( $id, 'sh_forums',  $_POST['sh-forums']);
 		}
 		
 		if ($_POST ['post_type'] == 'page') {
