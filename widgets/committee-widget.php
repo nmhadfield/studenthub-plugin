@@ -7,7 +7,7 @@ class Committee_Widget extends WP_Widget {
 	public function __construct() {
 		$widget_ops = array( 
 			'classname' => 'committee_widget',
-			'description' => 'Shows the upcoming deadlines for the current student',
+			'description' => 'Shows the committee for the selected society',
 		);
 		parent::__construct( 'committee_widget', 'Committee Widget', $widget_ops );
 	}
@@ -19,19 +19,8 @@ class Committee_Widget extends WP_Widget {
 	 * @param array $instance
 	 */
 	public function widget( $args, $instance ) {
-		$results = array();
-		$committee = get_post_meta(get_the_ID(), 'sh_committee', false);
-		
-		for ($i = 0; $i < count($committee); $i++) {
-			$user = get_user_by('id', $committee[$i]['id']);
-			$role = $committee[$i]['role'];
-			
-			array_push($results, array(
-					'role' => $role, 
-					'name' => $user->display_name,
-					'email' => $user->user_email));
-		}
-		include('committee.php');
+		//$committee = get_post_meta(get_the_ID(), 'sh_committee', true);
+		//include('committee.php');
 	}
 }
 ?>

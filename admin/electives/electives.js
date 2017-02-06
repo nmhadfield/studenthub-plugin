@@ -102,3 +102,7 @@ function studenthub_electives_remove(event) {
 function studentHubAdminUpload() {
 	jQuery.post(ajaxurl, {action: 'studenthub_admin_import_elective', xml: jQuery("#output").val()});
 }
+
+function studentHubTestEmail() {
+	jQuery.post(ajaxurl, {action: 'studenthub_admin_test_email', email: jQuery("#sh_admin_test_email").val()});
+}

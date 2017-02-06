@@ -8,6 +8,7 @@
  * Author: Natasha Hadfield
  * License: GPL2
  */
+require_once ('admin/audit/audit.php');
 require_once (ABSPATH . 'wp-content/plugins/buddypress/bp-forums/bbpress/bb-includes/functions.bb-topics.php');
 require_once ("classes/topic-loop.php");
 
@@ -35,14 +36,32 @@ add_action ( 'admin_menu', 'sh_admin_menu' );
 add_action ( 'admin_enqueue_scripts', 'sh_admin_scripts' );
 add_action ( 'wp_enqueue_scripts', 'sh_widget_scripts' );
 add_action ( 'wp_ajax_studenthub_admin_import_elective', 'sh_admin_import_elective' );
+add_action ( 'wp_ajax_studenthub_admin_test_email', 'sh_admin_test_email' );
+add_action ( 'wp_ajax_wp_ulike_process', 'sh_log_wp_ulike_process');
 add_action ( 'add_meta_boxes', 'sh_admin_metaboxes' );
 add_action ( 'save_post', 'sh_admin_page_save', 10, 2 );
 add_action ( 'save_post', 'sh_admin_societies_save', 10, 2 );
 add_action ( 'save_post', 'sh_admin_deadlines_save', 10, 2 );
+add_action('wp_mail_failed', 'sh_admin_error', 10, 1);
 
-add_filter('query_vars', 'studenthub_add_query_vars_filter');
+add_action ( 'bbp_new_topic', 'sh_save_topic', 10, 4 );
+add_action ( 'bbp_new_reply', 'sh_save_reply', 10, 4 );
+
+add_filter ( 'query_vars', 'studenthub_add_query_vars_filter' );
+add_filter( 'wp_nav_menu_items', 'sh_logout_menu_link', 10, 2 );
+
+
+function sh_logout_menu_link( $items, $args ) {
+	if ($args->theme_location == 'fixed-menu' ) {
+		$items .= '<li class="right"><a href="'. wp_logout_url() .'">'. __("Log Out") .'</a></li>';
+	}
+	return $items;
+}
 function studenthub_add_query_vars_filter($vars) {
-	$vars[] = 'sh_scope';
+	$vars [] = 'sh_scope';
+	$vars [] = 'sh_action';
+	$vars [] = 'sh_post_type';
+	$vars [] = 'sh_part';
 	return $vars;
 }
 
@@ -67,11 +86,10 @@ add_action ( 'widgets_init', function () {
 	register_widget ( 'society_contact_widget' );
 } );
 
-add_filter( 'template_include', 'sh_include_template', 99 );
-
-function sh_include_template( $template ) {
-	$new_template = locate_template( $template );
-	if ( '' != $new_template ) {
+add_filter ( 'template_include', 'sh_include_template', 99 );
+function sh_include_template($template) {
+	$new_template = locate_template ( $template );
+	if ('' != $new_template) {
 		return $new_template;
 	}
 	return $template;
@@ -95,8 +113,41 @@ function sh_init() {
 			'has_archive' => true 
 	) );
 	flush_rewrite_rules ( true );
-	show_admin_bar(true);
+	show_admin_bar ( true );
 }
+function sh_save_topic($topic_id, $forum_id, $anonymous_data, $topic_author) {
+	// set the categories for the topic
+	if (array_key_exists ( "studenthub-subject-select", $_POST )) {
+		$categories = $_POST ["studenthub-subject-select"];
+		$categoryIds = [ ];
+		foreach ( $categories as $name ) {
+			$categoryIds [$name] = get_cat_ID ( $name );
+		}
+
+		wp_set_object_terms ( $topic_id, $categoryIds, "category" );
+	}
+
+	// set the topic-type
+	$type = get_term_by ( 'name', $_POST ["resource-type"], 'topic-type' );
+	if ($type) {
+		wp_set_object_terms ( $topic_id, $type->name, "topic-type" );
+	}
+	// save link as post metadata
+	if (! empty ( $_POST ["studenthub-url"] )) {
+		add_post_meta ( $topic_id, "link", $_POST ["studenthub-url"] );
+	}
+	
+	if (array_key_exists('mbchbYearOfStudyInLatestAcademicYear', $_COOKIE)) {
+		add_post_meta($topic_id, "sh_user_group", $_COOKIE['mbchbYearOfStudyInLatestAcademicYear']);
+	}
+}
+
+function sh_save_reply($reply_id, $topic_id, $forum_id, $anonymous_data, $reply_author, $param, $reply_to ) {
+	if (array_key_exists('mbchbYearOfStudyInLatestAcademicYear', $_COOKIE)) {
+		add_post_meta($reply_id, "sh_user_group", $_COOKIE['mbchbYearOfStudyInLatestAcademicYear']);
+	}
+}
+
 function sh_admin_init() {
 	// make sure that StudentHubAdmin can access forums & groups
 	$admin_role = get_role ( "student_hub_admin" );
@@ -172,22 +223,22 @@ function sh_admin_scripts() {
 	) );
 	
 	wp_enqueue_script ( 'jquery-ui-datepicker' );
-	wp_enqueue_script( 'jquery-form' );
+	wp_enqueue_script ( 'jquery-form' );
 }
 function sh_widget_scripts() {
 	wp_enqueue_script ( 'sh_widgets', plugins_url ( 'widgets/scripts/widget.js', __FILE__ ) );
-	wp_enqueue_script('sh_societies', plugins_url('admin/societies/societies-admin.js', __FILE__));
+	wp_enqueue_script ( 'sh_societies', plugins_url ( 'admin/societies/societies-admin.js', __FILE__ ) );
 }
 function sh_admin_metaboxes() {
 	add_meta_box ( "sh_admin_page_sidebar", "SideBar", "sh_admin_page_sidebar", "page", "side", "high" );
 	add_meta_box ( "sh_admin_page_forum", "Forum", "sh_admin_page_forum", "page", "normal", "high" );
 	add_meta_box ( "sh_admin_topic", "Topics", "sh_admin_topic_metabox", "page", "side", "high" );
-	//add_meta_box ( "sh_admin_page_postform", "Post Form", "sh_admin_page_postform", "page", "normal", "high" );
+	// add_meta_box ( "sh_admin_page_postform", "Post Form", "sh_admin_page_postform", "page", "normal", "high" );
 	
 	add_meta_box ( "sh_admin_page_forum", "Forum", "sh_admin_page_forum", "societies", "normal", "high" );
 	
-	//add_meta_box ( "sh_admin_forum_theme", "Theme", "sh_admin_forum_theme", "forum", "side", "high" );
-	add_meta_box ( "sh_admin_forum_post", "New Post Form", "sh_admin_forum_post_metaboxes", "forum", "side", "high");
+	// add_meta_box ( "sh_admin_forum_theme", "Theme", "sh_admin_forum_theme", "forum", "side", "high" );
+	add_meta_box ( "sh_admin_forum_post", "New Post Form", "sh_admin_forum_post_metaboxes", "forum", "side", "high" );
 	add_meta_box ( "sh_admin_topic_links", "Links", "sh_admin_topic_links", "topic", "normal", "high" );
 	
 	add_meta_box ( "sh_admin_deadlines_metaboxes", "Info", "sh_admin_deadlines_metaboxes", "sh_deadline", "side", "high", null );
@@ -202,14 +253,12 @@ function sh_admin_topic_links() {
 }
 function sh_admin_menu() {
 	add_menu_page ( 'StudentHub', 'StudentHub', 'read', 'studenthub-plugin-settings', 'sh_settings_page_electives', 'dashicons-admin-generic' );
-	add_submenu_page( 'studenthub-plugin-settings', 'Import Electives', 'Import Electives', 'read', 'sh-settings-page-electives', 'sh_settings_page_electives' );
-	add_submenu_page( 'studenthub-plugin-settings', 'Societies', 'Societies', 'read', 'sh-settings-page-societies', 'sh_settings_page_societies' );
+	add_submenu_page ( 'studenthub-plugin-settings', 'Import Electives', 'Import Electives', 'read', 'sh-settings-page-electives', 'sh_settings_page_electives' );
+	add_submenu_page ( 'studenthub-plugin-settings', 'Societies', 'Societies', 'read', 'sh-settings-page-societies', 'sh_settings_page_societies' );
 }
-
 function sh_settings_page_electives() {
 	include (plugin_dir_path ( __FILE__ ) . 'admin/electives/import-electives.php');
 }
-
 function sh_admin_create_forum($forumName, $parent = NULL) {
 	$forum = get_page_by_title ( $forumName, OBJECT, "forum" );
 	if ($forum == null) {
@@ -250,5 +299,29 @@ function sh_admin_import_elective() {
 		}
 		
 		wp_set_object_terms ( $id, $keywords, 'category', false );
+	}
+}
+
+function sh_admin_test_email() {
+	$result = wp_mail($_POST['email'], 'Test Email', 'Hello from the StudentHub!');
+	if ($result) {
+		error_log("woohoo");
+	}
+	else {
+		error_log('rats');
+	}
+}
+
+function sh_admin_error($error) {
+	error_log($error -> get_error_message());
+}
+
+function sh_log_wp_ulike_process() {
+	if (array_key_exists('type', $_POST) && $_POST['type'] == 'likeThisTopic') {
+	bp_activity_add(array(
+			'action' => 'Like a post',
+			'component' => 'StudentHub',
+			'type' => 'sh_wpulike',
+			'item_id' => $POST['id']));
 	}
 }

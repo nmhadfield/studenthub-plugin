@@ -15,12 +15,11 @@ function sh_admin_forum_save($id, $post) {
 	if (array_key_exists ( 'post_type', $_POST )) {
 		if ($_POST ['post_type'] == 'forum') {
 			update_post_meta ( $id, 'sh_new_post_title', $_POST ['sh-forum-post-title'] );
-			if (array_key_exists ( 'sh-forum-post-require-subjects', $_POST )) {
-				update_post_meta ( $id, 'sh_new_post_requires_subjects', true );
-			} 
-			else {
-				update_post_meta ( $id, 'sh_new_post_requires_subjects', false );
-			}
+			$require_subjects = array_key_exists ( 'sh-forum-post-require-subjects', $_POST ) && $_POST['sh-forum-post-require-subjects'] == true;
+			update_post_meta ( $id, 'sh_new_post_requires_subjects', $require_subjects );
+			
+			$selections = array_keys($_POST['sh-forum-post-subjects']);
+			update_post_meta($id, 'sh_forum_subject_areas', $selections);
 		}
 	}
 }
@@ -29,15 +28,5 @@ function sh_admin_forum_save($id, $post) {
  * Defines the features of the new post form for this forum.
  */
 function sh_admin_forum_post_metaboxes() {
-	?>
-<p>
-	<label>Post Title</label> <input name='sh-forum-post-title'
-		value='<?php echo(get_post_meta(get_the_ID(), 'sh_new_post_title', true)); ?>'></input>
-</p>
-<?php $checked = get_post_meta(get_the_ID(), 'sh_new_post_requires_subjects', true) ? 'checked': ''?>
-<input type='checkbox' name='sh-forum-post-require-subjects'
-	<?php echo($checked); ?>>
-Require Subjects
-</input>
-<?php
+	include('forum-metabox.php');
 }

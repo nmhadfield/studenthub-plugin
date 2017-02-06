@@ -74,7 +74,14 @@ function sh_admin_page_save($id, $post) {
 	}
 	if (array_key_exists('post_type', $_POST)) {
 		if ($_POST ['post_type'] == 'page' || $_POST ['post_type'] == 'societies') {
-			update_post_meta ( $id, 'sh_forums',  $_POST['sh-forums']);
+			$forums = $_POST['sh-forums'];
+			$result = array();
+			foreach ($forums as $entry) {
+				if ($entry['id'] != '') {
+					$result[] = $entry;
+				}
+			}
+			update_post_meta ( $id, 'sh_forums', $result);
 		}
 		
 		if ($_POST ['post_type'] == 'page') {

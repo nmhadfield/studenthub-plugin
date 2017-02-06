@@ -5,7 +5,8 @@ add_action ( "add_meta_boxes", "sh_societies_admin_metaboxes" );
 add_action ( 'admin_enqueue_scripts', 'societies_admin_js' );
 add_action ( 'wp_ajax_studenthub_find_user', 'sh_find_user_by_email' );
 add_action ( 'wp_ajax_studenthub_add_user_to_committee', 'sh_add_user_to_committee' );
-add_action ( 'wp_ajax_studenthub_register_society', 'sh_admin_register_society' );
+add_action ( 'admin_post_register_society', 'sh_admin_register_society' );
+add_action ( 'admin_post_studenthub_edit_committee', 'sh_admin_society_edit_committee' );
 
 function sh_societies_init() {
 	$GLOBALS ['sh_societies_roles'] = array (
@@ -14,6 +15,7 @@ function sh_societies_init() {
 			'Vice President',
 			'Secretary',
 			'Treasurer',
+			'Events Co-ordinator',
 			'1st Year Rep',
 			'2nd Year Rep',
 			'3rd Year Rep',
@@ -21,7 +23,6 @@ function sh_societies_init() {
 			'5th Year Rep',
 			'BMSc Rep',
 			'General Member',
-			'Events Co-ordinator'
 	);
 }
 function sh_societies_admin_settings() {
@@ -98,38 +99,60 @@ function sh_admin_societies_save($id, $post) {
 	}
 }
 function sh_admin_register_society() {
+	global $post;
+	$new = false;
 	
-	// create the post for the society
-	$title = $_POST ['sh_register_society_name'];
-	$desc = $_POST ['sh_register_society_desc'];
-	$args = array (
-			'post_title' => $title,
-			'post_content' => $desc,
-			'post_type' => 'societies' 
-	);
-	$post = wp_insert_post ( $args );
+	if (!$post) {
+		$new = true;
+		
+		// create the post for the society
+		$title = $_POST ['sh_register_society_name'];
+		$desc = $_POST ['sh_register_society_desc'];
+		$args = array (
+				'post_title' => $title,
+				'post_content' => $desc,
+				'post_type' => 'societies' 
+		);
+		$post = wp_insert_post ( $args );
+		
+		wp_update_post ( array (
+				'ID' => $post,
+				'post_status' => 'publish'
+		) );
+		
+		// create the forum for the society
+		$forum = sh_admin_create_forum ( $title, get_page_by_title ( 'Societies', OBJECT, "forum" ) );
+		add_post_meta ( $post, 'sh_parent', $forum );
+	}
 	
-	// create the forum for the society
-	$forum = sh_admin_create_forum ( $title, get_page_by_title ( 'Societies', OBJECT, "forum" ) );
-	add_post_meta ( $post, 'sh_parent', $forum );
-	
-	// add contact methods as metadata
-	add_post_meta ( $post, 'sh_email', $_POST ['sh_register_society_email'] );
-	add_post_meta ( $post, 'sh_facebook', $_POST ['sh_register_society_fb'] );
-	add_post_meta ( $post, 'sh_twitter', $_POST ['sh_register_society_twitter'] );
-	
-	// register the creator as a committee member
-	$role = $_POST ['sh_register_society_role'];
-	add_post_meta ( $post, 'sh_committee', array (
-			'role' => $role,
-			'id' => get_current_user_id () 
-	) );
-	
-	wp_update_post ( array (
-			'ID' => $post,
-			'post_status' => 'publish' 
-	) );
+	// update contact methods as metadata
+	update_post_meta ( $post, 'sh_email', $_POST ['sh_register_society_email'] );
+	update_post_meta ( $post, 'sh_facebook', $_POST ['sh_register_society_fb'] );
+	update_post_meta ( $post, 'sh_twitter', $_POST ['sh_register_society_twitter'] );
 	
 	wp_redirect(get_permalink($post));
 	die ();
+}
+
+function sh_admin_society_edit_committee() {
+	$id = $_POST['post_id'];
+	$roles = $_POST ['sh_committee_member_role'];
+	$members = $_POST['sh_register_society_committee_member'];
+	
+	$committee = array();
+	for ($i = 0; $i < count($roles); $i++) {
+		$entries = array();
+		foreach ($members[$i] as $entry) {
+			if ($entry != '') {
+				$entries[] = $entry;
+			}
+		}
+		if (count($entries) > 0) {
+			$committee[$roles[$i]] = $entries;
+		}
+	}
+	update_post_meta ($id, 'sh_committee', $committee );
+	
+	wp_redirect(get_permalink($id));
+	die();
 }
