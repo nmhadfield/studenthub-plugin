@@ -1,6 +1,8 @@
 <div class="widget browse-category collapsed">
-	<span class="title"><?php echo(get_category($instance['sh_category']) -> name); ?></span>
-	<span><a href="#" onclick="sh_expandCollapse(event, '<?php echo($instance['sh_category']); ?>')" class="expand-collapse collapsed"></a></span>
+	<?php $cat = $instance['sh_category']; ?>
+	<div class="title expand-collapse"><?php echo(get_category($cat) -> name); ?>
+		<a href="#" onclick="sh_expandCollapse(event, '<?php echo($cat); ?>')" class="expand-collapse collapsed"></a>
+	</div>
 	<div id="<?php echo($instance['sh_category'].'-widget-content'); ?>" class="widget-content collapsed">
 		<ul class="browse">
 		<?php $categories = get_terms('category', array('hide_empty' => false, 'parent' => $instance['sh_category'])); ?>

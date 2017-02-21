@@ -2,8 +2,9 @@
 
 ?>
 <div id="studenthub-deadlines" class="widget article shadow blog-holder">
-	<span class="title">Deadlines</span>
-	<span><a href="#" onclick="sh_expandCollapse(event, 'deadlines')" class="expand-collapse"></a></span>
+	<div class="title expand-collapse">Deadlines
+		<a href="#" onclick="sh_expandCollapse(event, 'deadlines')" class="expand-collapse"></a>
+	</div>
 	<div id="deadlines-widget-content" class="widget-content">
 		<ul class="browse">
 			<?php foreach ($deadlines as $deadline) { ?>

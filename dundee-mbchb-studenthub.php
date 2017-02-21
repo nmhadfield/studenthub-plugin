@@ -8,7 +8,7 @@
  * Author: Natasha Hadfield
  * License: GPL2
  */
-require_once ('admin/audit/audit.php');
+
 require_once (ABSPATH . 'wp-content/plugins/buddypress/bp-forums/bbpress/bb-includes/functions.bb-topics.php');
 require_once ("classes/topic-loop.php");
 
@@ -17,6 +17,7 @@ require_once ("admin/deadlines/deadlines-admin.php");
 require_once ('admin/societies/societies-admin.php');
 require_once ('admin/forum/forum-admin.php');
 require_once ('admin/topic/topic-admin.php');
+require_once ('admin/audit/audit.php');
 
 require_once ('widgets/search-resources-widget.php');
 require_once ('widgets/category-filter-widget.php');
@@ -26,7 +27,6 @@ require_once ('widgets/committee-widget.php');
 require_once ('widgets/peer-mentors-groups-widget.php');
 require_once ('widgets/society-contact-widget.php');
 
-register_activation_hook ( __FILE__, 'sh_activate' );
 // remove this as it blocks us from ever accessing the admin pages given we can't have admin roles!
 remove_filter ( 'map_meta_cap', '_bp_enforce_bp_moderate_cap_for_admins', 10, 4 );
 
@@ -42,13 +42,16 @@ add_action ( 'add_meta_boxes', 'sh_admin_metaboxes' );
 add_action ( 'save_post', 'sh_admin_page_save', 10, 2 );
 add_action ( 'save_post', 'sh_admin_societies_save', 10, 2 );
 add_action ( 'save_post', 'sh_admin_deadlines_save', 10, 2 );
-add_action('wp_mail_failed', 'sh_admin_error', 10, 1);
+add_action ( 'wp_mail_failed', 'sh_admin_error', 10, 1);
 
 add_action ( 'bbp_new_topic', 'sh_save_topic', 10, 4 );
-add_action ( 'bbp_new_reply', 'sh_save_reply', 10, 4 );
+add_action ( 'bbp_new_reply', 'sh_save_reply', 10, 7 );
+add_action ( 'bp_activity_add', 'sh_activity_metadata', 10, 1 );
+add_action ( 'user_register', 'sh_user_registration', 10, 1 );
+add_action ( 'wp_login', 'sh_user_login', 10, 1);
 
 add_filter ( 'query_vars', 'studenthub_add_query_vars_filter' );
-add_filter( 'wp_nav_menu_items', 'sh_logout_menu_link', 10, 2 );
+add_filter ( 'wp_nav_menu_items', 'sh_logout_menu_link', 10, 2 );
 
 
 function sh_logout_menu_link( $items, $args ) {
@@ -102,7 +105,8 @@ function sh_init() {
 					'singular_name' => __ ( 'Society' ) 
 			),
 			'public' => true,
-			'has_archive' => false 
+			'has_archive' => false,
+			'supports' => array('thumbnail'),
 	) );
 	register_post_type ( 'sh_deadline', array (
 			'labels' => array (
@@ -237,7 +241,7 @@ function sh_admin_metaboxes() {
 	
 	add_meta_box ( "sh_admin_page_forum", "Forum", "sh_admin_page_forum", "societies", "normal", "high" );
 	
-	// add_meta_box ( "sh_admin_forum_theme", "Theme", "sh_admin_forum_theme", "forum", "side", "high" );
+	add_meta_box ( "sh_admin_forum_icon", "Icon", "sh_admin_forum_icon_metaboxes", "forum", "side", "high" );
 	add_meta_box ( "sh_admin_forum_post", "New Post Form", "sh_admin_forum_post_metaboxes", "forum", "side", "high" );
 	add_meta_box ( "sh_admin_topic_links", "Links", "sh_admin_topic_links", "topic", "normal", "high" );
 	
@@ -255,6 +259,7 @@ function sh_admin_menu() {
 	add_menu_page ( 'StudentHub', 'StudentHub', 'read', 'studenthub-plugin-settings', 'sh_settings_page_electives', 'dashicons-admin-generic' );
 	add_submenu_page ( 'studenthub-plugin-settings', 'Import Electives', 'Import Electives', 'read', 'sh-settings-page-electives', 'sh_settings_page_electives' );
 	add_submenu_page ( 'studenthub-plugin-settings', 'Societies', 'Societies', 'read', 'sh-settings-page-societies', 'sh_settings_page_societies' );
+	add_submenu_page ( 'studenthub-plugin-settings', 'Statistics', 'Statistics', 'read', 'sh-settings-statistics', 'sh_settings_page_statistics' );
 }
 function sh_settings_page_electives() {
 	include (plugin_dir_path ( __FILE__ ) . 'admin/electives/import-electives.php');
@@ -316,12 +321,34 @@ function sh_admin_error($error) {
 	error_log($error -> get_error_message());
 }
 
+function sh_activity_metadata($activity_id) {
+	$result = bp_activity_update_meta($activity_id, 'sh_test_', 'value');
+	error_log('this is what happened: '.$result.'.');
+	if (array_key_exists('mbchbYearOfStudyInLatestAcademicYear', $_COOKIE)) {
+		bp_activity_update_meta($activity_id, "sh_userGroup", $_COOKIE['mbchbYearOfStudyInLatestAcademicYear']);
+	}
+}
+
+function sh_user_login($user_id) {
+	bp_activity_add(array(
+			'action' => 'User login',
+			'component' => 'StudentHub',
+			'type' => 'sh_login'));
+}
+
+function sh_user_registration( $user_id ) {
+	bp_activity_add(array(
+				'action' => 'New User',
+				'component' => 'StudentHub',
+				'type' => 'sh_new_user'));
+}
+
 function sh_log_wp_ulike_process() {
 	if (array_key_exists('type', $_POST) && $_POST['type'] == 'likeThisTopic') {
-	bp_activity_add(array(
-			'action' => 'Like a post',
-			'component' => 'StudentHub',
-			'type' => 'sh_wpulike',
-			'item_id' => $POST['id']));
+		bp_activity_add(array(
+				'action' => 'Like a post',
+				'component' => 'StudentHub',
+				'type' => 'sh_wpulike',
+				'item_id' => $POST['id']));
 	}
 }

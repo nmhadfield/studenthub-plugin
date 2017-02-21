@@ -36,6 +36,7 @@ class Deadlines_Widget extends WP_Widget {
 			array_push($deadlines, array('title' => get_the_title(), 'date' => date_format($deadline, "d-m-Y")));
 		}
 		include('deadlines.php');
+		wp_reset_postdata();
 	}
 
 }
