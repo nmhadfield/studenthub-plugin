@@ -259,7 +259,7 @@ function sh_admin_menu() {
 	add_menu_page ( 'StudentHub', 'StudentHub', 'read', 'studenthub-plugin-settings', 'sh_settings_page_electives', 'dashicons-admin-generic' );
 	add_submenu_page ( 'studenthub-plugin-settings', 'Import Electives', 'Import Electives', 'read', 'sh-settings-page-electives', 'sh_settings_page_electives' );
 	add_submenu_page ( 'studenthub-plugin-settings', 'Societies', 'Societies', 'read', 'sh-settings-page-societies', 'sh_settings_page_societies' );
-	add_submenu_page ( 'studenthub-plugin-settings', 'Statistics', 'Statistics', 'read', 'sh-settings-statistics', 'sh_settings_page_statistics' );
+	//add_submenu_page ( 'studenthub-plugin-settings', 'Statistics', 'Statistics', 'read', 'sh-settings-statistics', 'sh_settings_page_statistics' );
 }
 function sh_settings_page_electives() {
 	include (plugin_dir_path ( __FILE__ ) . 'admin/electives/import-electives.php');
@@ -333,14 +333,18 @@ function sh_user_login($user_id) {
 	bp_activity_add(array(
 			'action' => 'User login',
 			'component' => 'StudentHub',
-			'type' => 'sh_login'));
+			'type' => 'sh_login',
+			'user_login' => $user_id,
+	));
 }
 
 function sh_user_registration( $user_id ) {
 	bp_activity_add(array(
 				'action' => 'New User',
 				'component' => 'StudentHub',
-				'type' => 'sh_new_user'));
+				'type' => 'sh_new_user',
+				'user_login' => $user_id,
+	));
 }
 
 function sh_log_wp_ulike_process() {
@@ -349,6 +353,8 @@ function sh_log_wp_ulike_process() {
 				'action' => 'Like a post',
 				'component' => 'StudentHub',
 				'type' => 'sh_wpulike',
-				'item_id' => $POST['id']));
+				'item_id' => $_POST['id'],
+				'user_login' => $user_id,
+		));
 	}
 }
