@@ -11,7 +11,9 @@ class TopicLoop {
 	 * @param array $instance
 	 */
 	public function output($args) {
+		global $post;
 		$paginate = true;
+		
 		$query_args = array(
 				'post_type'       => "topic",
 				'posts_per_page'  => 20,
@@ -37,7 +39,11 @@ class TopicLoop {
 		if (array_key_exists('sh_category', $args)) {
 			$query_args['category_name'] = $args['sh_category'];
 		}
-		
+		else {
+			$cats = wp_get_object_terms(get_the_ID(), 'category', array('fields' => 'ids'));
+			$query_args['cat'] = $cats;
+		}
+			
 		if (array_key_exists('sh_searchterms', $args)) {
 			$query_args['s'] = $args['sh_searchterms'];
 		}

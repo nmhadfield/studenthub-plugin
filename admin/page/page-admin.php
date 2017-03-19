@@ -6,9 +6,11 @@ function sh_admin_page_forum() {
 	
 	echo('<ul id="sh-forum-list">');
 	$index = 0;
-	foreach ($forumIds as $forumInfo) {
-		sh_admin_page_create_forum_entry($forumInfo, $index);
-		$index++;
+	if ($forumIds) {
+		foreach ($forumIds as $forumInfo) {
+			sh_admin_page_create_forum_entry($forumInfo, $index);
+			$index++;
+		}
 	}
 	if ($index == 0) {
 		sh_admin_page_create_forum_entry(null, $index);
@@ -17,6 +19,25 @@ function sh_admin_page_forum() {
 	echo('</ul>');
 	echo('<p>');
 	echo('<input type="button" id="sh-add-another" value="Add Forum"></input>');
+	echo('</p>');
+}
+
+function sh_admin_page_categories() {
+	echo('Show posts from the following categories:<br>');
+	$categories = get_post_meta(get_the_ID(), 'sh_categories',true);
+	echo('<ul id="sh-categories">');
+	$index = 0;
+	foreach ($categories as $cat) {
+		sh_admin_page_create_cat_entry($cat, $index);
+		$index++;
+	}
+	if ($index == 0) {
+		sh_admin_page_create_cat_entry(null, $index);
+	}
+	
+	echo('</ul>');
+	echo('<p>');
+	echo('<input type="button" id="sh-add-another-cat" value="Add Category"></input>');
 	echo('</p>');
 }
 
@@ -56,11 +77,16 @@ function sh_admin_page_sidebar() {
 	}
 	foreach ( $sidebars as $sidebar ) {
 		echo ("<option value='" . $sidebar . "'");
-		if ($sidebar == $current) {
+		if ($sidebar == $current || $current == null) {
 			echo (" selected='selected'");
 		}
 		echo (">");
-		echo ($sidebar);
+		if (array_key_exists($sidebar, $GLOBALS['wp_registered_sidebars'])) {
+			echo ($GLOBALS['wp_registered_sidebars'][$sidebar]['name']);
+		}
+		else {
+			echo(get_the_title());
+		}
 		echo ("</option>");
 	}
 	echo ("</select>");

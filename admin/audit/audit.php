@@ -21,7 +21,12 @@ function sh_settings_page_statistics() {
 		echo (';' . $activity->item_id . ';');
 		echo ($activity->secondary_item_id . ';');
 		echo ($activity->date_recorded . ';');
-		echo (get_post_meta ( $activity->item_id, 'sh_user_group', true ) . ';');
+		if ($activity -> item_id != 0) {
+			echo (get_post_meta ( $activity->item_id, 'sh_user_group', true ) . ';');
+		}
+		else {
+			echo (bp_activity_get_meta ( $activity->item_id, 'sh_user_group', true ) . ';');
+		}
 		echo ("\n");
 	}
 	status_header(200);

@@ -26,6 +26,7 @@ require_once ('widgets/societies-widget.php');
 require_once ('widgets/committee-widget.php');
 require_once ('widgets/peer-mentors-groups-widget.php');
 require_once ('widgets/society-contact-widget.php');
+require_once('widgets/top5-widget.php');
 
 // remove this as it blocks us from ever accessing the admin pages given we can't have admin roles!
 remove_filter ( 'map_meta_cap', '_bp_enforce_bp_moderate_cap_for_admins', 10, 4 );
@@ -48,7 +49,7 @@ add_action ( 'bbp_new_topic', 'sh_save_topic', 10, 4 );
 add_action ( 'bbp_new_reply', 'sh_save_reply', 10, 7 );
 add_action ( 'bp_activity_add', 'sh_activity_metadata', 10, 1 );
 add_action ( 'user_register', 'sh_user_registration', 10, 1 );
-add_action ( 'wp_login', 'sh_user_login', 10, 1);
+add_action ( 'wp_login', 'sh_user_login', 99, 3);
 
 add_filter ( 'query_vars', 'studenthub_add_query_vars_filter' );
 add_filter ( 'wp_nav_menu_items', 'sh_logout_menu_link', 10, 2 );
@@ -71,9 +72,10 @@ function studenthub_add_query_vars_filter($vars) {
 add_action ( 'widgets_init', function () {
 	$sidebars = get_option ( 'sh_sidebars', array () );
 	foreach ( $sidebars as $sidebar ) {
+		$page = explode("-", $sidebar)[1];
 		register_sidebar ( array (
 				'id' => $sidebar,
-				'name' => $sidebar 
+				'name' => get_post($page) -> post_name, 
 		) );
 	}
 	register_widget ( 'search_resources_widget' );
@@ -87,6 +89,7 @@ add_action ( 'widgets_init', function () {
 	register_widget ( 'category_logo_widget' );
 	register_widget ( 'link_widget' );
 	register_widget ( 'society_contact_widget' );
+	register_widget ( 'top5_widget' );
 } );
 
 add_filter ( 'template_include', 'sh_include_template', 99 );
@@ -98,6 +101,9 @@ function sh_include_template($template) {
 	return $template;
 }
 function sh_init() {
+	// allow pages to be assigned categories
+	register_taxonomy_for_object_type( 'category', 'page' );
+	
 	// make sure that all our custom post types are registered
 	register_post_type ( 'societies', array (
 			'labels' => array (
@@ -208,6 +214,12 @@ function sh_admin_init() {
 	$admin_role->add_cap ( 'wpcf_user_meta_field_view', true );
 	$admin_role->add_cap ( 'wpcf_user_meta_field_edit', true );
 	$admin_role->add_cap ( 'wpcf_user_meta_field_edit_others', true );
+	
+	register_setting('sh_front_page_options', 'sh_front_page_year_1');
+	register_setting('sh_front_page_options', 'sh_front_page_year_2');
+	register_setting('sh_front_page_options', 'sh_front_page_year_3');
+	register_setting('sh_front_page_options', 'sh_front_page_year_4');
+	register_setting('sh_front_page_options', 'sh_front_page_year_5');
 }
 function sh_admin_scripts() {
 	wp_register_style ( 'studenthub_admin_styles', plugins_url ( 'style.css', __FILE__ ) );
@@ -257,9 +269,13 @@ function sh_admin_topic_links() {
 }
 function sh_admin_menu() {
 	add_menu_page ( 'StudentHub', 'StudentHub', 'read', 'studenthub-plugin-settings', 'sh_settings_page_electives', 'dashicons-admin-generic' );
+	add_submenu_page ( 'studenthub-plugin-settings', 'Front Page', 'Front Page', 'read', 'sh-settings-front-page', 'sh_settings_front_page' );
 	add_submenu_page ( 'studenthub-plugin-settings', 'Import Electives', 'Import Electives', 'read', 'sh-settings-page-electives', 'sh_settings_page_electives' );
 	add_submenu_page ( 'studenthub-plugin-settings', 'Societies', 'Societies', 'read', 'sh-settings-page-societies', 'sh_settings_page_societies' );
 	//add_submenu_page ( 'studenthub-plugin-settings', 'Statistics', 'Statistics', 'read', 'sh-settings-statistics', 'sh_settings_page_statistics' );
+}
+function sh_settings_front_page() {
+	include(plugin_dir_path ( __FILE__ ) . 'admin/options/front-page.php');
 }
 function sh_settings_page_electives() {
 	include (plugin_dir_path ( __FILE__ ) . 'admin/electives/import-electives.php');
@@ -322,39 +338,44 @@ function sh_admin_error($error) {
 }
 
 function sh_activity_metadata($activity_id) {
-	$result = bp_activity_update_meta($activity_id, 'sh_test_', 'value');
-	error_log('this is what happened: '.$result.'.');
 	if (array_key_exists('mbchbYearOfStudyInLatestAcademicYear', $_COOKIE)) {
-		bp_activity_update_meta($activity_id, "sh_userGroup", $_COOKIE['mbchbYearOfStudyInLatestAcademicYear']);
+		bp_activity_update_meta($activity_id, "sh_user_group", $_COOKIE['mbchbYearOfStudyInLatestAcademicYear']);
 	}
 }
 
-function sh_user_login($user_id) {
-	bp_activity_add(array(
+function sh_user_login($user_login, $user) {
+	$id = bp_activity_add(array(
 			'action' => 'User login',
 			'component' => 'StudentHub',
 			'type' => 'sh_login',
-			'user_login' => $user_id,
+			'user_id' => $user -> ID,
 	));
+	if (array_key_exists('mbchbYearOfStudyInLatestAcademicYear', $_COOKIE)) {
+		bp_activity_update_meta($id, "sh_user_group", $_COOKIE['mbchbYearOfStudyInLatestAcademicYear']);
+	}
 }
 
 function sh_user_registration( $user_id ) {
-	bp_activity_add(array(
+	$id = bp_activity_add(array(
 				'action' => 'New User',
 				'component' => 'StudentHub',
-				'type' => 'sh_new_user',
-				'user_login' => $user_id,
+				'type' => 'sh_new_user'
 	));
+	if (array_key_exists('mbchbYearOfStudyInLatestAcademicYear', $_COOKIE)) {
+		bp_activity_update_meta($id, "sh_user_group", $_COOKIE['mbchbYearOfStudyInLatestAcademicYear']);
+	}
 }
 
 function sh_log_wp_ulike_process() {
 	if (array_key_exists('type', $_POST) && $_POST['type'] == 'likeThisTopic') {
-		bp_activity_add(array(
+		$id = bp_activity_add(array(
 				'action' => 'Like a post',
 				'component' => 'StudentHub',
 				'type' => 'sh_wpulike',
-				'item_id' => $_POST['id'],
-				'user_login' => $user_id,
+				'item_id' => $_POST['id']
 		));
+		if (array_key_exists('mbchbYearOfStudyInLatestAcademicYear', $_COOKIE)) {
+			bp_activity_update_meta($id, "sh_user_group", $_COOKIE['mbchbYearOfStudyInLatestAcademicYear']);
+		}
 	}
 }
