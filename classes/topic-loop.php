@@ -57,8 +57,8 @@ class TopicLoop {
 		}
 		
 		// which forums to include
-		if (array_key_exists('forums', $args)) {
-			$parents = studenthub_sh_parent_explode($args['forums']);
+		if (array_key_exists('sh_forums', $args)) {
+			$parents = studenthub_sh_parent_explode($args['sh_forums']);
 			$query_args['post_parent__in'] = $parents;
 		}
 		else {
@@ -72,8 +72,13 @@ class TopicLoop {
 
 function studenthub_sh_parent_explode($forumMap) {
 	$result = array();
-	foreach ($forumMap as $forumId) {
-		$result = array_merge($result, studenthub_sh_parent($forumId));
+	if (is_array($forumMap)) {
+		foreach ($forumMap as $forumId) {
+			$result = array_merge($result, studenthub_sh_parent($forumId));
+		}
+	}
+	else {
+		$result = explode(',', $forumMap);
 	}
 	return $result;
 }

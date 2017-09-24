@@ -8,11 +8,11 @@ jQuery(document).ready(function($) {
 function sh_filterResources(event, category) {
 	// add the newly selected category to the existing search terms
 	var categories = category ? category : "";
-	jQuery(".sh-search-cat label").each(function() {
+	jQuery(".sh-search-cat label").each(function(index, element) {
 		if (categories.length) {
 			categories += "+";
 		}
-		categories += jQuery(this).val();
+		categories += jQuery(element).text();
 	});
 	if (category) {
 		jQuery("#sh-search-terms").append("<div class='sh-search-cat'><a href='' onclick='sh_removeSearchTerm(event)' class='remove'></a><label>" + category + "</label></div>");
@@ -32,7 +32,7 @@ function sh_filterResources(event, category) {
 		jQuery("#sh-new-search-term").val("");
 	}
 	
-	var feed = jQuery.get(ajaxurl, {action: 'studenthub_reload_feed', sh_category: categories, sh_searchterms: terms, sh_parent: jQuery("#sh_parent").val()});
+	var feed = jQuery.get(ajaxurl, {action: 'studenthub_reload_feed', sh_category: categories, sh_searchterms: terms, sh_forums: jQuery("#sh_forums").val()});
 	
 	feed.done(function (html) {
 		var parent = jQuery("#topic-loop").parent();
